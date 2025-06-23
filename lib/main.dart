@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login/': (context) => const LoginView(),
         '/register/': (context) => const RegisterView(),
+        '/notes/': (context) => const NotesView(),
       },
     );
   }
@@ -40,25 +41,27 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) {
-      // User not logged in
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (user == null) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginView()),
         );
-      });
-      return const SizedBox.shrink(); // Prevent build loop
-    } else if (!user.emailVerified) {
-      // Email not verified
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      } else if (!user.emailVerified) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const EmailVerifyView()),
         );
-      });
-      return const SizedBox.shrink(); // Prevent build loop
-    }
+      } else {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/notes/', (route) => false);
+      }
+    });
 
-    return const NotesView();
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(), // or SizedBox.shrink()
+      ),
+    );
   }
 }
 
