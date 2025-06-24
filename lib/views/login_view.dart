@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/constants/routes.dart';
 import 'package:flutter_app/firebase_options.dart';
 import 'package:flutter_app/main.dart';
+import 'package:flutter_app/utilities/show_error_dialog.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -79,8 +80,10 @@ class _LoginViewState extends State<LoginView> {
                     'invalid-email. Please try again.',
                   );
                 } else {
-                  await showErrorDialog(context, e.code);
+                  await showErrorDialog(context, 'Error : ${e.code}');
                 }
+              } catch (e) {
+                await showErrorDialog(context, e.toString());
               }
             },
             child: const Text('login'),
@@ -99,23 +102,4 @@ class _LoginViewState extends State<LoginView> {
       ),
     );
   }
-}
-
-Future<void> showErrorDialog(BuildContext context, String text) {
-  return showDialog<void>(
-    context: context,
-    builder:
-        (context) => AlertDialog(
-          title: const Text('An error occurred'),
-          content: Text(text),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-  );
 }

@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
         LoginRoute: (context) => const LoginView(),
         RegisterRoute: (context) => const RegisterView(),
         NotesRoute: (context) => const NotesView(),
+        VerifyEmailRoute: (context) => const EmailVerifyView(),
       },
     );
   }
@@ -114,7 +115,7 @@ class _NotesViewState extends State<NotesView> {
 Future<bool> showLogoutDialog(BuildContext context) {
   return showDialog<bool>(
     context: context,
-    builder: (context) {
+    builder: (context) {        
       return AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
