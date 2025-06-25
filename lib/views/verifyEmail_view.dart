@@ -1,6 +1,10 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/constants/routes.dart';
 import 'package:flutter_app/firebase_options.dart';
 
 class EmailVerifyView extends StatefulWidget {
@@ -19,8 +23,12 @@ class _EmailVerifyViewState extends State<EmailVerifyView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("We've sent you an email verification. Please check your email inbox."),
-            const Text("If you didn't receive an email verification. Please click here."),
+            const Text(
+              "We've sent you an email verification. Please check your email inbox.",
+            ),
+            const Text(
+              "If you didn't receive an email verification. Please click here.",
+            ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: () async {
@@ -31,6 +39,15 @@ class _EmailVerifyViewState extends State<EmailVerifyView> {
                 );
               },
               child: const Text("Send Email Verification"),
+            ),
+            TextButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil(RegisterRoute, (route) => false);
+              },
+              child: const Text('Sign out'),
             ),
           ],
         ),
