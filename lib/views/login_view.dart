@@ -1,9 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/constants/routes.dart';
-import 'package:flutter_app/firebase_options.dart';
-import 'package:flutter_app/main.dart';
+import 'package:flutter_app/services/auth/auth_exceptions.dart';
+import 'package:flutter_app/services/auth/auth_service.dart';
 import 'package:flutter_app/utilities/show_error_dialog.dart';
 
 class LoginView extends StatefulWidget {
@@ -53,13 +51,11 @@ class _LoginViewState extends State<LoginView> {
               final email = _email.text;
               final password = _password.text;
               try {
-                final userCredential = await FirebaseAuth.instance
-                    .signInWithEmailAndPassword(
-                      email: email,
-                      password: password,
-                    );
-                print('Logged in: ${userCredential.user?.email}');
-                final user = FirebaseAuth.instance.currentUser;
+                await AuthService.firebase().logIn(
+                  email: email,
+                  password: password,
+                );
+                final user = AuthService.firebase().currentUser;
                 if (user?.emailVerified ?? false) {
                   Navigator.of(
                     context,
@@ -69,27 +65,26 @@ class _LoginViewState extends State<LoginView> {
                     context,
                   ).pushNamedAndRemoveUntil(VerifyEmailRoute, (route) => false);
                 }
-              } on FirebaseAuthException catch (e) {
-                if (e.code == 'user-not-found') {
-                  await showErrorDialog(
-                    context,
-                    'User not found. Please register first.',
-                  );
-                } else if (e.code == 'wrong-password') {
-                  await showErrorDialog(
-                    context,
-                    'wrong password. Please try again.',
-                  );
-                } else if (e.code == 'invalid-email') {
-                  await showErrorDialog(
-                    context,
-                    'invalid-email. Please try again.',
-                  );
-                } else {
-                  await showErrorDialog(context, 'Error : ${e.code}');
-                }
-              } catch (e) {
-                await showErrorDialog(context, e.toString());
+              } on UserNotFoundAuthException {
+                await showErrorDialog(
+                  context,
+                  'User not found. Please register first.',
+                );
+              } on WrongPasswordAuthException {
+                await showErrorDialog(
+                  context,
+                  'Wrong password. Please try again.',
+                );
+              } on InvalidEmailAuthException {
+                await showErrorDialog(
+                  context,
+                  'Invalid email. Please try again.',
+                );
+              } on GenericAuthException {
+                await showErrorDialog(
+                  context,
+                  'Authentication error. Please try again later.',
+                );
               }
             },
             child: const Text('login'),
