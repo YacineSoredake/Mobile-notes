@@ -1,7 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/services/auth/auth_service.dart';
-import 'package:flutter_app/services/auth/auth_user.dart';
+
 import 'package:flutter_app/views/login_view.dart';
 
 class NotesView extends StatefulWidget {
@@ -48,10 +47,11 @@ class _NotesViewState extends State<NotesView> {
     );
   }
 }
+
 Future<bool> showLogoutDialog(BuildContext context) {
   return showDialog<bool>(
     context: context,
-    builder: (context) {        
+    builder: (context) {
       return AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),

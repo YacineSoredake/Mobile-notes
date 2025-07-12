@@ -1,11 +1,6 @@
-import 'dart:math';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/constants/routes.dart';
-import 'package:flutter_app/firebase_options.dart';
+import 'package:flutter_app/services/auth/auth_service.dart';
 
 class EmailVerifyView extends StatefulWidget {
   const EmailVerifyView({super.key});
@@ -32,8 +27,7 @@ class _EmailVerifyViewState extends State<EmailVerifyView> {
             const SizedBox(height: 16),
             TextButton(
               onPressed: () async {
-                final user = FirebaseAuth.instance.currentUser;
-                await user?.sendEmailVerification();
+                await AuthService.firebase().sendEmailVerification();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Verification email sent")),
                 );
@@ -42,7 +36,7 @@ class _EmailVerifyViewState extends State<EmailVerifyView> {
             ),
             TextButton(
               onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+                await AuthService.firebase().logOut();
                 Navigator.of(
                   context,
                 ).pushNamedAndRemoveUntil(RegisterRoute, (route) => false);
