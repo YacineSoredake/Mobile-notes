@@ -16,7 +16,7 @@ class FirebaseAuthProvider implements AuthProvider {
   }
 
   @override
-  Future<AuthUser> initialize() {
+  Future<void> initialize() {
     throw UnimplementedError();
   }
 

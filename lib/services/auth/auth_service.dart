@@ -12,7 +12,7 @@ class AuthService implements AuthProvider {
   AuthUser? get currentUser => provider.currentUser;
 
   @override
-  Future<AuthUser> initialize() {
+  Future<void> initialize() {
     // TODO: implement initialize
     throw UnimplementedError();
   }
