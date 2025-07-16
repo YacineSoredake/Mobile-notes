@@ -3,7 +3,35 @@ import 'package:flutter_app/services/auth/auth_provider.dart';
 import 'package:test/test.dart';
 import 'package:flutter_app/services/auth/auth_user.dart';
 
-void main() {}
+void main() {
+  group('mock auth', () {
+    final provider = MockAuthProvider();
+    test('should not be initialized to begin with', () {
+      expect(provider.initialized, false);
+    });
+    test('cannor logout without initialization', () {
+      expect(
+        () => provider.logOut(),
+        throwsA(TypeMatcher<NotInitializedException>()),
+      );
+    });
+    test('should be able to initialized', () async {
+      await provider.initialize();
+      expect(provider.initialized, true);
+    });
+
+    test('user should be null after initialization', () {
+      expect(provider.currentUser, null);
+    }); 
+
+    test('user should be able to initialize in less than 2 seconds', () async {
+      final start = DateTime.now();
+      await provider.initialize();
+      final end = DateTime.now();
+      expect(end.difference(start).inSeconds, lessThan(2));
+    });
+  });
+}
 
 class NotInitializedException implements Exception {}
 
@@ -33,9 +61,9 @@ class MockAuthProvider implements AuthProvider {
 
   @override
   Future<void> logOut() async {
-   if (!initialized) throw NotInitializedException();
+    if (!initialized) throw NotInitializedException();
     if (_user == null) throw UserNotFoundAuthException();
-     await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     _user = null;
     return Future.value();
   }
@@ -54,8 +82,8 @@ class MockAuthProvider implements AuthProvider {
 
   @override
   Future<void> sendEmailVerification() {
-   if (!initialized) throw NotInitializedException();
-   final user = _user;
+    if (!initialized) throw NotInitializedException();
+    final user = _user;
     if (user == null) throw UserNotFoundAuthException();
     const verifiedUser = AuthUser(emailVerified: true);
     _user = verifiedUser;
@@ -63,7 +91,7 @@ class MockAuthProvider implements AuthProvider {
   }
 
   @override
-  Future<void> sendPasswordReset({required String toEmail}) { 
+  Future<void> sendPasswordReset({required String toEmail}) {
     throw UnimplementedError();
   }
 }
