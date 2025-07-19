@@ -4,31 +4,82 @@ import 'package:test/test.dart';
 import 'package:flutter_app/services/auth/auth_user.dart';
 
 void main() {
-  group('mock auth', () {
-    final provider = MockAuthProvider();
+  late MockAuthProvider provider;
+
+  setUp(() {
+    provider = MockAuthProvider(); // Create fresh instance before each test
+  });
+
+  group('MockAuthProvider tests', () {
     test('should not be initialized to begin with', () {
-      expect(provider.initialized, false);
+      expect(provider.initialized, isFalse);
     });
-    test('cannor logout without initialization', () {
-      expect(
-        () => provider.logOut(),
-        throwsA(TypeMatcher<NotInitializedException>()),
-      );
+
+    test('cannot logout without initialization', () {
+      expect(() => provider.logOut(), throwsA(isA<NotInitializedException>()));
     });
-    test('should be able to initialized', () async {
+
+    test('should be able to initialize', () async {
       await provider.initialize();
-      expect(provider.initialized, true);
+      expect(provider.initialized, isTrue);
     });
 
-    test('user should be null after initialization', () {
-      expect(provider.currentUser, null);
-    }); 
+    test('user should be null after initialization', () async {
+      await provider.initialize();
+      expect(provider.currentUser, isNull);
+    });
 
-    test('user should be able to initialize in less than 2 seconds', () async {
+    test('should initialize in less than 2 seconds', () async {
       final start = DateTime.now();
       await provider.initialize();
       final end = DateTime.now();
       expect(end.difference(start).inSeconds, lessThan(2));
+    });
+
+    test('create user should delegate to logIn function', () async {
+      await provider.initialize();
+
+      expect(
+        () => provider.register(email: 'foo@bar.com', password: 'anypassword'),
+        throwsA(isA<UserNotFoundAuthException>()),
+      );
+
+      expect(
+        () => provider.register(email: 'someone@bar.com', password: 'foonbar'),
+        throwsA(isA<WrongPasswordAuthException>()),
+      );
+
+      final user = await provider.register(email: 'foo', password: 'bar');
+      expect(provider.currentUser, equals(user));
+      expect(user.emailVerified, isTrue);
+    });
+
+    test('logged user should be able to get verified', () async {
+      await provider.initialize();
+      await provider.register(email: 'foo', password: 'bar');
+      await provider.sendEmailVerification();
+
+      final user = provider.currentUser;
+      expect(user, isNotNull);
+      expect(user!.emailVerified, isTrue);
+    });
+
+    test('should be able to logout and login again', () async {
+      await provider.initialize();
+      await provider.register(email: 'foo', password: 'bar');
+
+      await provider.logOut();
+      expect(provider.currentUser, isNull);
+
+      final user = await provider.logIn(email: 'foo', password: 'bar');
+      expect(provider.currentUser, equals(user));
+    });
+
+    test('calling password reset throws UnimplementedError', () {
+      expect(
+        () => provider.sendPasswordReset(toEmail: 'foo@bar.com'),
+        throwsA(isA<UnimplementedError>()),
+      );
     });
   });
 }
@@ -41,8 +92,8 @@ class MockAuthProvider implements AuthProvider {
   bool get initialized => _initialized;
 
   @override
-  // TODO: implement currentUser
   AuthUser? get currentUser => _user;
+
   @override
   Future<void> initialize() async {
     await Future.delayed(const Duration(seconds: 1));
@@ -65,7 +116,6 @@ class MockAuthProvider implements AuthProvider {
     if (_user == null) throw UserNotFoundAuthException();
     await Future.delayed(const Duration(seconds: 1));
     _user = null;
-    return Future.value();
   }
 
   @override
@@ -73,9 +123,7 @@ class MockAuthProvider implements AuthProvider {
     required String email,
     required String password,
   }) async {
-    if (!initialized) {
-      throw NotInitializedException();
-    }
+    if (!initialized) throw NotInitializedException();
     await Future.delayed(const Duration(seconds: 1));
     return logIn(email: email, password: password);
   }
