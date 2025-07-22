@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/services/auth/auth_service.dart';
-
 import 'package:flutter_app/views/login_view.dart';
 
 class NotesView extends StatefulWidget {
@@ -13,6 +12,9 @@ class NotesView extends StatefulWidget {
 enum MenuAction { logout }
 
 class _NotesViewState extends State<NotesView> {
+
+  String get userEmail => AuthService.firebase().currentUser!.email!;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

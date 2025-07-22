@@ -4,11 +4,10 @@ import 'package:flutter_app/services/auth/auth_provider.dart';
 
 @immutable
 class AuthUser {
+  final String? email;
   final bool emailVerified;
-  const AuthUser({required this.emailVerified});
+  const AuthUser({required this.email, required this.emailVerified});
 
   factory AuthUser.fromFirebase(User user) =>
-      AuthUser(emailVerified: user.emailVerified);
-}
-
-
+      AuthUser(email: user.email, emailVerified: user.emailVerified);
+} 
