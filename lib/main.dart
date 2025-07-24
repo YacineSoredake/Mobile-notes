@@ -1,13 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/constants/routes.dart';
 import 'package:flutter_app/firebase_options.dart';
 import 'package:flutter_app/services/auth/auth_service.dart';
 import 'package:flutter_app/views/login_view.dart';
-import 'package:flutter_app/views/notes_views.dart';
+import 'package:flutter_app/views/notes/notes_views.dart';
 import 'package:flutter_app/views/register_view.dart';
 import 'package:flutter_app/views/verifyEmail_view.dart';
+import 'package:flutter_app/views/notes/new_note.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
         RegisterRoute: (context) => const RegisterView(),
         NotesRoute: (context) => const NotesView(),
         VerifyEmailRoute: (context) => const EmailVerifyView(),
+        newNoeteRoute: (context) => const NewNoteView(),
       },
     );
   }

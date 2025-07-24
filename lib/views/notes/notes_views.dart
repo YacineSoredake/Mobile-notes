@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/services/auth/auth_service.dart';
 import 'package:flutter_app/services/crud/note_service.dart';
+import 'package:flutter_app/constants/routes.dart';
 import 'package:flutter_app/views/login_view.dart';
 
 class NotesView extends StatefulWidget {
@@ -23,6 +24,7 @@ class _NotesViewState extends State<NotesView> {
     super.initState();
   }
 
+  @override
   void dispose() {
     _noteService.close();
     super.dispose();
@@ -34,6 +36,12 @@ class _NotesViewState extends State<NotesView> {
       appBar: AppBar(
         title: const Text('My Notes'),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(newNoeteRoute); // Check spelling
+            },
+            icon: const Icon(Icons.add),
+          ),
           PopupMenuButton<MenuAction>(
             onSelected: (value) async {
               if (value == MenuAction.logout) {
@@ -46,13 +54,12 @@ class _NotesViewState extends State<NotesView> {
                 }
               }
             },
-            itemBuilder:
-                (context) => [
-                  const PopupMenuItem<MenuAction>(
-                    value: MenuAction.logout,
-                    child: Text('Logout'),
-                  ),
-                ],
+            itemBuilder: (context) => [
+              const PopupMenuItem<MenuAction>(
+                value: MenuAction.logout,
+                child: Text('Logout'),
+              ),
+            ],
           ),
         ],
       ),
@@ -64,11 +71,30 @@ class _NotesViewState extends State<NotesView> {
               return StreamBuilder(
                 stream: _noteService.allNotes,
                 builder: (context, snapshot) {
-                  switch (snapshot.connectionState) {
-                    case ConnectionState.waiting:
-                      return const Center(child:Text('waiting for notes...'));
-                    default:
-                      return const CircularProgressIndicator();
+                  if (snapshot.hasData) {
+                    final notes = snapshot.data as List<DatabaseNote>;
+                    if (notes.isEmpty) {
+                      return const Center(child: Text('No notes yet.'));
+                    } else {
+                      return ListView.builder(
+                        itemCount: notes.length,
+                        itemBuilder: (context, index) {
+                          final note = notes[index];
+                          return ListTile(
+                            title: Text(
+                              note.text,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            onTap: () {
+                              // Navigate to edit/view screen
+                            },
+                          );
+                        },
+                      );
+                    }
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
                   }
                 },
               );
@@ -80,6 +106,7 @@ class _NotesViewState extends State<NotesView> {
     );
   }
 }
+
 
 Future<bool> showLogoutDialog(BuildContext context) {
   return showDialog<bool>(
