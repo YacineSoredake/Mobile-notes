@@ -116,12 +116,11 @@ class NoteService {
     }
   }
 
-  Future<DatabaseNote> createNote({required DatabaseUser owner}) async {
+  Future<DatabaseNote> createNote({required DatabaseUser owner,required String text}) async {
     await _ensureDbIsOpen();
     final db = _getdatabaseOrThrow();
     final dbUser = await getUser(email: owner.email);
 
-    final text = 'Simple note text';
     final insertedNote = await db.insert(noteTable, {
       idUserColumn: dbUser.id,
       textColumn: text,
