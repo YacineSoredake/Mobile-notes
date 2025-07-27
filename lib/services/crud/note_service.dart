@@ -12,11 +12,16 @@ class NoteService {
   List<DatabaseNote> _notes = [];
 
   static final NoteService _shared = NoteService._sharedInstance();
-  NoteService._sharedInstance();
+  NoteService._sharedInstance() {
+    _noteStreamController = StreamController<List<DatabaseNote>>.broadcast(
+      onListen: () {
+        _noteStreamController.sink.add(_notes);
+      },
+    );
+  }
   factory NoteService() => _shared;
 
-  final _noteStreamController =
-      StreamController<List<DatabaseNote>>.broadcast();
+  late final StreamController<List<DatabaseNote>> _noteStreamController;
 
   Stream<List<DatabaseNote>> get allNotes => _noteStreamController.stream;
 
@@ -116,7 +121,10 @@ class NoteService {
     }
   }
 
-  Future<DatabaseNote> createNote({required DatabaseUser owner,required String text}) async {
+  Future<DatabaseNote> createNote({
+    required DatabaseUser owner,
+    required String text,
+  }) async {
     await _ensureDbIsOpen();
     final db = _getdatabaseOrThrow();
     final dbUser = await getUser(email: owner.email);
@@ -213,17 +221,22 @@ class NoteService {
   }
 
   Future<void> open() async {
-    if (_db != null) {
-      throw DatabaseIsAlreadyOpenException();
-    }
+    if (_db != null) return; // <-- fixed
+
     try {
       final docsPath = await getApplicationDocumentsDirectory();
       final dbPath = join(docsPath.path, db);
-      final database = await openDatabase(dbPath);
-      _db = database;
+      final database = await openDatabase(
+        dbPath,
+        version: 1,
+        onCreate: (db, version) async {
+          await db.execute(createUserTable);
+          await db.execute(createNoteTable);
+        },
+      );
 
-      await database.execute(createUserTable);
-      await database.execute(createNoteTable);
+      _db = database;
+      await _cacheNotes();
     } on MissingPlatformDirectoryException {
       throw Exception('Could not find the database directory');
     } catch (e) {
@@ -278,7 +291,10 @@ class DatabaseNote {
       'isSyncedWithCloud: $isSyncedWithCloud';
 
   @override
-  bool operator ==(covariant DatabaseUser other) => other.id == id;
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DatabaseNote && other.id == id;
+  }
 
   @override
   int get hashCode => id.hashCode;
@@ -291,15 +307,17 @@ const noteTable = 'notes';
 const emailColumn = 'email';
 const textColumn = 'text';
 const idUserColumn = 'id_user';
-const isSyncedWithCloudColumn = 'isSyncedWithCloud';
-const createNoteTable = ''' CREATE TABLE IF NOT EXISTS "notes" (
+const isSyncedWithCloudColumn = 'is_synced_wirh_cloud';
+
+const createNoteTable = '''CREATE TABLE "notes" (
 	"id"	INTEGER NOT NULL,
 	"id_user"	INTEGER NOT NULL,
 	"text"	TEXT,
 	"is_synced_wirh_cloud"	INTEGER DEFAULT 0,
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("id_user") REFERENCES "user"("id")
-) ;''';
+)''';
+
 const createUserTable = '''
 CREATE TABLE IF NOT EXISTS "user" (
 	"id"	INTEGER NOT NULL,

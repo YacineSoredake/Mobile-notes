@@ -14,18 +14,17 @@ class _NewNoteViewState extends State<NewNoteView> {
   late final NoteService _noteService;
   late final TextEditingController _textController;
 
+  @override
   void initState() {
     super.initState();
     _noteService = NoteService();
     _textController = TextEditingController();
-    super.initState();
+    _setupTextController();
   }
 
   void _textControllerListener() async {
     final note = _note;
-    if (note == null) {
-      return;
-    }
+    if (note == null) return;
     final text = _textController.text;
     await _noteService.updateNote(note: note, text: text);
   }
@@ -35,19 +34,23 @@ class _NewNoteViewState extends State<NewNoteView> {
     _textController.addListener(_textControllerListener);
   }
 
-  Future<DatabaseNote> createNewNote() async {
+  Future<DatabaseNote?> createNewNote() async {
     final existingNote = _note;
-    if (existingNote != null) {
-      return existingNote;
-    }
-    final text = _textController.text;
-    final currentUser = AuthService.firebase().currentUser!;
+    if (existingNote != null) return existingNote;
+
+    final currentUser = AuthService.firebase().currentUser;
+    if (currentUser == null) return null;
+
     final email = currentUser.email!;
     final owner = await _noteService.getUser(email: email);
-    return await _noteService.createNote(owner: owner, text: text);
+    final newNote = await _noteService.createNote(owner: owner, text: '');
+    setState(() {
+      _note = newNote;
+    });
+    return newNote;
   }
 
-  void _DeleteNoteIfEmpty() {
+  void _deleteNoteIfEmpty() {
     final note = _note;
     final text = _textController.text;
     if (text.isEmpty && note != null) {
@@ -55,7 +58,7 @@ class _NewNoteViewState extends State<NewNoteView> {
     }
   }
 
-  void _SaveNoteIfNotEmpty() async {
+  Future<void> _saveNoteIfNotEmpty() async {
     final note = _note;
     final text = _textController.text;
     if (note != null && text.isNotEmpty) {
@@ -65,8 +68,8 @@ class _NewNoteViewState extends State<NewNoteView> {
 
   @override
   void dispose() {
-    _DeleteNoteIfEmpty();
-    _SaveNoteIfNotEmpty();
+    _deleteNoteIfEmpty();
+    _saveNoteIfNotEmpty();
     _textController.dispose();
     super.dispose();
   }
@@ -74,40 +77,38 @@ class _NewNoteViewState extends State<NewNoteView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Note'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              final note = await createNewNote();
-              _note = note;
-              _setupTextController();
-              Navigator.of(context).pop();
-            },
-            icon: const Icon(Icons.save),
-          ),
-        ],
-      ),
-      body: FutureBuilder(
+      appBar: AppBar(title: const Text('New Note')),
+      body: FutureBuilder<DatabaseNote?>(
         future: createNewNote(),
         builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              _note = snapshot.data as DatabaseNote;
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(child: Text('Failed to create note.'));
+          } else {
+            // Only assign _note if it's not already set
+            if (_note == null) {
+              _note = snapshot.data;
               _setupTextController();
-              return TextField(
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
                 controller: _textController,
                 keyboardType: TextInputType.multiline,
+                maxLines: null,
                 decoration: const InputDecoration(
                   hintText: 'Type your note here...',
+                  border: OutlineInputBorder(),
                 ),
-                maxLines: null,
-              );
-            default:
-              return const Center(child: Text('Unexpected state'));
+              ),
+            );
           }
         },
-      ) ,
+      ),
     );
   }
 }
