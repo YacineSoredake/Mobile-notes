@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/services/auth/auth_service.dart';
 import 'package:flutter_app/services/crud/note_service.dart';
+import 'package:flutter_app/utilities/generics/get_arguments.dart';
 
 class NewNoteView extends StatefulWidget {
   const NewNoteView({super.key});
@@ -34,7 +35,15 @@ class _NewNoteViewState extends State<NewNoteView> {
     _textController.addListener(_textControllerListener);
   }
 
-  Future<DatabaseNote?> createNewNote() async {
+  Future<DatabaseNote?> createOrGetExistingNote(BuildContext context) async {
+    final widgetNote = context.getArguments<DatabaseNote>();
+
+    if (widgetNote != null) {
+      _note = widgetNote;
+      _textController.text = widgetNote.text;
+      return widgetNote;
+    }
+
     final existingNote = _note;
     if (existingNote != null) return existingNote;
 
@@ -78,34 +87,22 @@ class _NewNoteViewState extends State<NewNoteView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('New Note')),
-      body: FutureBuilder<DatabaseNote?>(
-        future: createNewNote(),
+      body: FutureBuilder(
+        future: createOrGetExistingNote(context),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Failed to create note.'));
-          } else {
-            // Only assign _note if it's not already set
-            if (_note == null) {
-              _note = snapshot.data;
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
               _setupTextController();
-            }
-
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _textController,
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
-                decoration: const InputDecoration(
-                  hintText: 'Type your note here...',
-                  border: OutlineInputBorder(),
-                ),
+             return TextField(
+              controller: _textController,
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              decoration: const InputDecoration(
+                hintText: 'Type your note here...'
               ),
-            );
+             );
+            default:
+              return const Center(child: CircularProgressIndicator());
           }
         },
       ),
