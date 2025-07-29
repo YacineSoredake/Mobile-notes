@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/constants/routes.dart';
 import 'package:flutter_app/services/auth/auth_service.dart';
 import 'package:flutter_app/services/crud/note_service.dart';
+import 'package:flutter_app/utilities/dialogs/logout_diaglog.dart';
 import 'package:flutter_app/views/login_view.dart';
 import 'package:flutter_app/views/notes/notes_list_view.dart';
 
@@ -39,7 +40,7 @@ class _NotesViewState extends State<NotesView> {
             tooltip: 'Add new note',
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.of(context).pushNamed(newNoteRoute);
+              Navigator.of(context).pushNamed(NoteRoute);
             },
           ),
           PopupMenuButton<MenuAction>(
@@ -54,12 +55,13 @@ class _NotesViewState extends State<NotesView> {
                 }
               }
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem<MenuAction>(
-                value: MenuAction.logout,
-                child: Text('Logout'),
-              ),
-            ],
+            itemBuilder:
+                (context) => const [
+                  PopupMenuItem<MenuAction>(
+                    value: MenuAction.logout,
+                    child: Text('Logout'),
+                  ),
+                ],
           ),
         ],
       ),
@@ -85,7 +87,12 @@ class _NotesViewState extends State<NotesView> {
                   }
 
                   final allNotes = snapshot.data as List<DatabaseNote>;
-                  
+                  return NotesListView(
+                    notes: allNotes,
+                    onDeleteNote: (note) async {
+                      await _noteService.deleteNote(id: note.id);
+                    },
+                  );
                 },
               );
             default:
@@ -95,27 +102,4 @@ class _NotesViewState extends State<NotesView> {
       ),
     );
   }
-}
-
-Future<bool> showLogoutDialog(BuildContext context) {
-  return showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout'),
-          ),
-        ],
-      );
-    },
-  ).then((value) => value ?? false);
 }
