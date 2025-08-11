@@ -6,6 +6,25 @@ import 'package:flutter_app/services/cloud/cloud_note.dart';
 class FirebaseCloudStorage {
   final notes = FirebaseFirestore.instance.collection('notes');
 
+  Future<void> DeleteNote({required String documentId}) async {
+    try {
+      await notes.doc(documentId).delete();
+    } catch (e) {
+      throw CouldNotDeleteNoteException();
+    }
+  }
+
+  Future<void> updateNote({
+    required String documentId,
+    required String text,
+  }) async {
+    try {
+      await notes.doc(documentId).update({textFieldName: text});
+    } catch (e) {
+      throw CouldNotUpdateNoteException();
+    }
+  }
+
   Stream<Iterable<CloudNote>> allNotes({required String ownerUserId}) =>
       notes.snapshots().map(
         (event) => event.docs
